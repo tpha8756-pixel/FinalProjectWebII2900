@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0">
+	<link rel="preconnect" href=
+"https://fonts.googleapis.com/">>
+	<link rel="preconnect" href=
+"https://fonts.gstatic.com/" crossorigin>
+	<link href=
+"https://fonts.googleapis.com//css2?family=Balsamiq+Sans&display=swap" rel="stylesheet">
+	<title>Mount St Mary College 4 Pillars/Motive Memory Game</title>
+	<!-- CSS -->
+	<style>
+
+		body {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+			background-color: rgb(206, 201, 201);
+			background-image: url("images/DCHall.jpg");
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+			background-attachment: fixed;
+			font-family: 'Balsamiq Sans', sans-serif;
+		}
+        
+		h1,
+		#controls,
+		#level {
+			background: rgba(2, 255, 213, 0.7);
+			color: #3498db;
+			padding: 7px 14px;
+			border-radius: 9px;
+		}
+
+		#controls {
+			margin: 20px 0;
+		}
+
+		#strict-mode {
+			margin-right: 20px;
+		}
+
+		#simon-board {
+			display: grid;
+			grid-template-columns: repeat(2, 3fr);
+			gap: 20px;
+			max-width: 300px;
+			text-align: center;
+			margin-bottom: 1rem;
+		}
+
+		.simon-btn {
+			width: 100px;
+			height: 100px;
+			border: none;
+			outline: none;
+			cursor: pointer;
+			font-size: 18px;
+			font-weight: bold;
+			background-color: #3498db;
+			color: #fff;
+			transition: background-color 0.3s;
+		}
+
+		.simon-button:disabled {
+			opacity: 0.75;
+			cursor: not-allowed;
+		}
+
+		.top-left {
+			background-color: rgb(0, 34, 255);
+		}
+
+		.top-right {
+			background-color: rgb(255, 255, 255);
+      color: #0f172a;
+		}
+
+    .middle-left {
+			background-color: rgb(247, 0, 255);
+      color: #0f172a;
+		}
+
+    .middle-right {
+			background-color: rgb(0, 255, 234);
+      color: #0f172a;
+		}
+
+		.bottom-left {
+			background-color: rgb(0, 0, 0);
+		}
+
+		.bottom-right {
+			background-color: rgb(115, 0, 255);
+		}
+
+		.level-count {
+			color: rgb(0, 238, 255);
+			background-color: rgb(0, 0, 0);
+			padding: 0.25rem 1rem;
+		}
+
+		#start-btn,
+		#power-btn {
+			font-family: 'Balsamiq Sans', sans-serif;
+			margin-top: 30px;
+			padding: 10px;
+			font-size: 16px;
+			cursor: pointer;
+			background-color: #2ecc71;
+			color: #fff;
+			border: none;
+			outline: none;
+			border-radius: 5px;
+			transition: background-color 0.3s;
+		}
+
+		#start-btn:hover,
+		#power-btn:hover {
+			background-color: #27ae60;
+		}
+
+		#start-btn:disabled,
+		#power-btn:disabled {
+			background-color: #484a4b;
+			cursor: not-allowed;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>4 Pillars/Motive Game</h1>
+	<div id="controls">
+		<label for="strict-mode">Strict Mode</label>
+		<input type="checkbox" id="strict-mode"
+			onchange="toggleStrictMode()">
+	</div>
+
+	<div id="simon-board">
+		<button type="button" class="simon-btn top left"
+                    onclick="handleClick(this)"
+    data-color="1">Community</button>
+    <button type="button" class="simon-btn top right"
+                    onclick="handleClick(this)"
+    data-color="2">Service</button>
+    <button type="button" class="simon-btn middle left"
+                    onclick="handleClick(this)"
+    data-color="3">Study</button>
+    <button type="button" class="simon-btn middle right"
+                    onclick="handleClick(this)"
+    data-color="4">Spiritually</button>
+    <button type="button" class="simon-btn bottom left"
+                    onclick="handleClick(this)"
+    data-color="5">Doce Me</button>
+    <button type="button" class="simon-btn bottom right"
+                    onclick="handleClick(this)"
+    data-color="6">veritatem</button>
+	</div>
+
+	<div id="level">
+		<span>Level: 
+			<span class="level-count">-</span>
+		</span>
+	</div>
+	<button id="power-btn"
+			onclick="togglePower()">Start</button>
+
+
+	<div id="popup-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 1000;">
+		<div style="background: #ff00ff; color: #0f172a; padding: 20px; border-radius: 10px; max-width: 360px; width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);">
+			<img id="popup-img" src="" alt="Pop-up image" style="max-width: 100%; max-height: 220px; border-radius: 8px; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto;">
+			<p id="popup-text" style="margin: 0 0 16px 0; font-size: 16px;"></p>
+			<button type="button" id="popup-close-btn" style="padding: 8px 18px; font-size: 15px; border: none; border-radius: 6px; background: #ff0000; color: #ffffff; cursor: pointer;">Ok</button>
+		</div>
+	</div>
+	<!-- JavaScript -->
+	<script>
+
+		let strictMode = false;
+		let powerOn = false;
+		let retryCurrentLevel = false;
+		const sequence = [];
+		let userSequence = [];
+		let level = 1;
+
+		const levelCount = document.querySelector('.level-count');
+        const powerBtn = document.getElementById('power-btn');
+
+
+		function showPopup(message, imagePath) {
+			const modal = document.getElementById("popup-modal");
+			const popupImg = document.getElementById("popup-img");
+			const popupText = document.getElementById("popup-text");
+			const closeBtn = document.getElementById("popup-close-btn");
+
+			popupText.textContent = message;
+			popupImg.src = imagePath;
+			modal.style.display = "flex";
+
+			closeBtn.onclick = () => {
+				modal.style.display = "none";
+			};
+		}
+
+		function startGame() {
+			sequence.length = 0;
+			userSequence.length = 0;
+			level = 1;
+			levelCount.textContent = level;
+			nextRound();
+			document.getElementById("start-btn").disabled = true;
+			document.getElementById("power-btn").disabled = false;
+		}
+
+		function nextRound() {
+			addToSequence();
+			playSequence();
+		}
+
+		function addToSequence() {
+			const randomColor = Math.floor(Math.random() * 4) + 1;
+			sequence.push(randomColor);
+		}
+
+		function playSequence() {
+			let i = 0;
+			const intervalId = setInterval(() => {
+				highlightButton(sequence[i]);
+				i++;
+				if (i >= sequence.length) {
+					clearInterval(intervalId);
+					enableButtons();
+				}
+			}, 1000);
+		}
+
+		function handleClick(button) {
+			if (!powerOn) return;
+
+				const userColor = button.getAttribute("data-color");
+				userSequence.push(Number(userColor));
+				highlightButton(userColor);
+
+				if(!checkSequence()) {
+					if (strictMode) {
+						const finalScore = level;
+						powerOn = false;
+						retryCurrentLevel = false;
+						sequence.length = 0;
+						userSequence = [];
+						level = 1;
+						levelCount.textContent = "-";
+						disableButtons();
+			            showPopup(
+							`Its Ok! You tried! lets go back to FYE.\nFINAL SCORE: ${finalScore}`, "images/GameOver.jpg"
+						);
+				} else {
+					userSequence = [];
+					retryCurrentLevel = true;
+					disableButtons();
+					showPopup(
+						`Almost! Please try again from this level.\nFINAL SCORE: ${level}`, "images/Motivation.jpg"
+					);
+				}
+				} else if (userSequence.length === sequence.length) {
+					userSequence = [];
+					level++;
+					levelCount.textContent = level;
+					if (level <= 20) {
+						setTimeout(() => nextRound(), 1000);
+					} else {
+						showPopup("Congratulations! You won!", "images/Congrats.jpg");
+						startGame();
+					}
+				}
+			}
+		
+
+		function checkSequence() {
+			for (let i = 0; i < userSequence.length; i++) {
+				if (userSequence[i] !== sequence[i]) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		function highlightButton(color) {
+			const button = document
+			.querySelector(`[data-color="${color}"]`);
+			if (Number(color) == 1) {
+				button.style.backgroundColor = 'blue'
+			}
+			else if (Number(color) == 2) {
+				button.style.backgroundColor = 'black'
+			}
+			else if (Number(color) == 3) {
+				button.style.backgroundColor = 'white'
+			}
+			else if (Number(color) == 4) {
+				button.style.backgroundColor = 'turqoise'
+			}
+			else if (Number(color) == 5) {
+				button.style.backgroundColor = 'indigo'
+			}
+			else if (Number(color) == 4) {
+				button.style.backgroundColor = 'purple'
+			}
+			setTimeout(() => {
+				button.attributes.removeNamedItem('style');
+			}, 300);
+		}
+
+		function enableButtons() {
+			const buttons = document
+			.querySelectorAll('.simon-btn');
+			buttons.forEach(button => 
+			button.removeAttribute('disabled'));
+		}
+
+		function disableButtons() {
+			const buttons = document
+			.querySelectorAll('.simon-btn');
+			buttons.forEach(button => 
+			button.setAttribute('disabled', 'true'));
+		}
+
+		function toggleStrictMode() {
+			strictMode = !strictMode;
+		}
+
+		function togglePower() {
+			powerOn = !powerOn;
+			if (powerOn) {
+				startGame();
+				enableButtons();
+				document.getElementById("start-btn")
+				.disabled = false;
+			} else {
+				userSequence = [];
+				disableButtons();
+				document.getElementById("start-btn")
+				.disabled = true;
+			}
+		}
+	</script>
+</body>
+
+</html>
